@@ -1,0 +1,65 @@
+<!--  -->
+<style lang='less'>
+.search-top {
+  height: 100rpx;
+  width: 100%;
+  background-color: #ff2d4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 16rpx;
+  position: relative;
+  box-sizing: border-box;
+  icon {
+    position: absolute;
+    left: 50%;
+    transform: translate(-180%);
+    z-index: 222;
+  }
+  input {
+    height: 60rpx;
+    width: 100%;
+    background-color: #fff;
+    text-align: center;
+    border-radius: 10rpx;
+  }
+}
+</style>
+
+<template>
+  <!-- 顶部搜索框部分 -->
+  <view class="search-top">
+    <icon type="search"></icon>
+    <input @tap="toSearch" type="text" placeholder="搜索">
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class Bar extends wepy.component {
+  props = {}
+
+  data = {}
+
+  methods = {
+    toSearch() {
+      console.log('去搜索页');
+      wx.navigateTo({
+        url: '/pages/search'
+      })
+    }
+  }
+
+  events = {}
+
+  watch = {}
+
+  computed = {}
+
+  onLoad() {}
+
+  onShow() {}
+}
+</script>
+

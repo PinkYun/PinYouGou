@@ -1,0 +1,271 @@
+<style lang="less">
+
+// 轮播图
+.index-swiper {
+  height: 340rpx;
+  width: 100%;
+  swiper-item {
+    navigator {
+      width: 100%;
+      height: 340rpx;
+      image {
+        width: 100%;
+        height: 340rpx;
+        display: block;
+      }
+    }
+  }
+}
+// 导航分类列表
+.nav {
+  display: flex;
+  align-items: center;
+  padding-top: 24rpx;
+  padding-bottom: 29rpx;
+  navigator {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    image {
+      width: 128rpx;
+      height: 128rpx;
+    }
+  }
+}
+
+//商品列表样式
+.clearfix {
+  overflow: hidden;
+}
+.fl {
+  float: left;
+}
+.fr {
+  float: right;
+}
+.items {
+  .title {
+    height: 90rpx;
+    width: 100%;
+    background-color: #f4f4f4;
+    margin: 29rpx 0 20rpx;
+    padding-top: 15rpx;
+    box-sizing: border-box;
+    image {
+      height: 70rpx;
+      width: 100%;
+    }
+  }
+  .item {
+    padding: 0 15rpx;
+    height: 385rpx;
+    navigator {
+      float: right;
+      height: 50%;
+      box-sizing: border-box;
+      padding: 5rpx;
+      image {
+        width: 100%;
+        height: 100%;
+      }
+      &:first-child {
+        height: 100%;
+        float: left;
+      }
+    }
+  }
+ 
+}
+
+// 底部样式
+.footer{
+  text-align: center;
+  color: #999;
+  font-size: 24rpx;
+}
+// 去顶部样式
+.toTop{
+  width: 90rpx;
+  height: 90rpx;
+  background-color: #ff2d4a;
+  border-radius: 50%;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  font-size: 27rpx;
+  color: #999;
+  opacity: .5;
+  text-align: center;
+  text{
+    display: block;
+  }
+}
+</style>
+<template>
+  <!-- 调用组件 -->
+  <!-- <searchBar></searchBar> -->
+  <bar></bar>
+  <!-- 轮播图 -->
+  <swiper indicator-dots autoplay circular class="index-swiper">
+      <block wx:for="{{swiperData}}" wx:key="">
+          <swiper-item>
+            <navigator url="{{item.navigator_url}}" open-type="navigate" hover-class="none">
+              <image mode="aspectFill" src="{{item.image_src}}"></image>
+            </navigator>
+          </swiper-item>
+      </block>
+  </swiper>
+  <!-- 导航分类列表 -->
+  <view class="nav">
+    <block wx:for="{{navData}}" wx:key="">
+        <navigator url="{{item.navigator_url}}" open-type="navigate" hover-class="none">
+            <image src="{{item.image_src}}"></image>
+        </navigator>
+    </block>
+  </view>
+
+  <!-- 商品列表 -->
+  <view class="items">   
+       <view class="title">
+           <image src="{{floorData1.floor_title.image_src}}"></image>
+       </view>
+        <view class="item clearfix">
+        <block wx:for="{{floorData1.product_list}}" wx:for-index="i">
+            <navigator url="{{item.navigator_url}}" open-type="navigate" hover-class="none">
+              <image style="width:{{item.image_width}}rpx" src="{{item.image_src}}"></image>
+            </navigator>
+        </block>
+        </view>
+  </view>
+  <view class="items">   
+       <view class="title">
+           <image src="{{floorData2.floor_title.image_src}}"></image>
+       </view>
+        <view class="item item2 clearfix">
+        <block wx:for="{{floorData2.product_list}}" wx:for-index="i">
+            <navigator url="{{item.navigator_url}}" open-type="navigate" hover-class="none">
+              <image style="width:{{item.image_width}}rpx" src="{{item.image_src}}"></image>
+            </navigator>
+        </block>
+        </view>
+  </view>
+  <view class="items">   
+       <view class="title">
+           <image src="{{floorData3.floor_title.image_src}}"></image>
+       </view>
+        <view class="item clearfix">
+        <block wx:for="{{floorData3.product_list}}" wx:for-index="i">
+            <navigator url="{{item.navigator_url}}" open-type="navigate" hover-class="none">
+              <image style="width:{{item.image_width}}rpx" src="{{item.image_src}}"></image>
+            </navigator>
+        </block>
+        </view>
+  </view>
+
+  <!-- 底部部分 -->
+  <view class="footer">
+    <text class="iconfont icon-xiao"></text>
+    <text>我是有底线的,当真???</text>
+  </view>
+  <!-- 去顶部 -->
+  <view class="toTop" hidden="{{isHidden}}" @tap="toTop">
+      <text class="iconfont icon-jiantoushang"></text>
+      顶部
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+// 引入组件
+// import searchBar from '../comments/searchBar'
+import bar from '../comments/bar'
+  
+export default class Index extends wepy.page {
+  config = {
+    navigationBarTitleText: '优购'
+  }
+  data = {
+    swiperData: '',
+    navData: '',
+    floorData: '',
+    floorData1: '',
+    floorData2: '',
+    floorData3: '',
+    isHidden: true
+  }
+  // 声明页面需要使用的组件
+  components = {
+      //  searchBar:searchBar
+      bar:bar
+    };
+  onLoad() {
+    console.log('onLoad')
+   
+    
+    // 页面加载数据
+    //轮播图
+    wx.request({
+      url: 'https://127.0.0.1/api/public/v1/home/swiperdata',
+      method: 'GET',
+      success: data => {
+        // console.log(data);
+        this.swiperData = data.data.message
+        this.$apply()
+        // console.log(this.swiperData);
+      },
+      fail: () => {}
+    })
+
+    //获取导航分类数据
+    wx.request({
+      url: 'https://www.zhengzhicheng.cn/api/public/v1/home/catitems',
+      method: 'GET',
+      success: data => {
+        // console.log(data);
+        this.navData = data.data.message
+        this.$apply()
+        // console.log(this.navData);
+      },
+      fail: () => {}
+    })
+
+    //产品列表
+    wx.request({
+      url: 'https://127.0.0.1/api/public/v1/home/floordata',
+      method: 'GET',
+      success: data => {
+        this.floorData = data.data.message
+        // console.log(this.floorData[0]);
+        this.floorData1 = this.floorData[0]
+        this.floorData2 = this.floorData[1]
+        this.floorData3 = this.floorData[2]
+        console.log(this.floorData1)
+        this.$apply()
+      },
+      fail: () => {}
+    })
+  }
+  methods ={
+    // 页面滚动显示或隐藏元素
+    onPageScroll(event){
+      // console.log(event);
+      // console.log('滚动了');
+      if(event.scrollTop >200){
+        this.isHidden=false
+      }else{
+        this.isHidden =true
+      }
+    },
+    // 点击去顶部
+    toTop(){
+      // console.log('点击了');
+      // 使用页面滚动到具体的位置方法 在小程序的API中
+      wx.pageScrollTo({
+        scrollTop: 0, //滚动的位置
+        duration: 500 //滚动过程的时长
+      });
+    }
+  }
+}
+</script>

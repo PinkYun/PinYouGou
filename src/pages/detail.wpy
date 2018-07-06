@@ -1,0 +1,308 @@
+<!--  -->
+<template>
+    <!-- 轮播区域 -->
+    <swiper @tap="previewImg" indicator-dots="{{indicatorDots}}" autoplay="{{autoplay}}" interval="{{interval}}" duration="{{duration}}">
+        <block wx:for="{{imgData.pics}}">
+            <swiper-item>
+                <image src="{{item.pics_sma}}" class="slide-image" />
+            </swiper-item>
+        </block>
+    </swiper>
+    <!-- 商品基本信息 -->
+    <view class="products">
+        <view class="price">¥{{imgData.goods_price}}</view>
+        <view class="detail-box">
+            <view class="left">{{imgData.goods_name}}</view>
+            <view class="right">
+                <text class="iconfont icon-shoucang"></text>
+                <text class="shoucang">收藏</text>
+            </view>
+        </view>
+        <view class="kuaidi">
+            快递:<text>免运费</text>
+        </view>
+    </view>
+    <!-- tab栏详情预览 -->
+    <view class="tab-box">
+        <view class="tab-bar">
+            <view @tap="selectTab({{0}})" class="item {{selectedIndex==0?'active':''}}">图文介绍</view>
+            <view @tap="selectTab({{1}})" class="item {{selectedIndex==1?'active':''}}">规格参数</view>
+        </view>
+        <view class="tab-content">
+            <view class="item" hidden="{{selectedIndex!=0}}">
+                <!-- // 引入模板 -->
+                <import src="../wxParse/wxParse.wxml"/>
+                <!-- //这里data中article为bindName -->
+                <template is="wxParse" data="{{wxParseData:article.nodes}}"/>
+            </view>
+            <view class="item" hidden="{{selectedIndex!=1}}">2</view>
+        </view>
+    </view>
+
+    <!-- 底部区域 -->
+    <view class="footer">
+        <view class="contact">
+            <text class="iconfont icon-kefu"></text>
+            <text>客服</text>
+        </view>
+        <view class="cart" @tap="toCart">
+            <text class="iconfont icon-gouwuche"></text>
+            <text>购物车</text>
+        </view>
+        <view @tap="joinCart" class="join-cart">加入购物车</view>
+        <view class="buy">立即购买</view>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+//在使用的js中引入需要使用的WxParse模块
+var WxParse = require('../wxParse/wxParse.js')
+export default class Detail extends wepy.page {
+  config = {
+    navigationBarTitleText: '商品详情'
+  }
+  data = {
+    //  保存带过来的id
+    goods_id: '',
+    imgData: '',
+    // 声明一个数组存放预览图片
+    previewImgUrls: [],
+    // 轮播图的参数
+    indicatorDots: true,
+    autoplay: true,
+    interval: 5000,
+    duration: 1000,
+    selectedIndex: 0
+  }
+  components = {}
+  methods = {
+    //   点击预览图片
+    previewImg() {
+      wx.previewImage({
+        urls: this.previewImgUrls
+      })
+    },
+    // 点击tab栏 获取高亮
+    selectTab(index) {
+      this.selectedIndex = index
+    },
+    // 点击购物车去到购物车页面
+    toCart(){
+       wx.switchTab({
+           url: '/pages/cart'
+       });
+    },
+    // 点击加入购物车
+    joinCart(){
+        // 提示用户 添加进行中
+        wx.showToast({
+            title: '在添加中,莫急.',
+            icon: 'loading',
+            duration: 1000,
+            mask: false,
+        });
+        // 加入缓存   自定义一个数据用来测试的
+        // wx.setStorage({
+        //     key: 'cart',
+        //     data: {
+        //         '893':1
+        //     }
+        // });
+        // 定义一个数据 值为undefined的
+        var cartData =undefined;
+        // 获取缓存中的数据 
+        wx.getStorage({
+            key: 'cart',
+            success: res => {
+                console.log(res);
+                //  获取数据把定义的carData赋值
+                cartData =res.data;
+               
+                //  判断数据是否存在  根据id来判断 有的话就累加 没有的话就直接添加
+                if(cartData[this.goods_id]){
+                    // 进到这里说明数据有了 累加数量
+                    cartData[this.goods_id] +=1;
+                }else{
+                    // 进到这里说明是没有的 就添加
+                    cartData[this.goods_id] =1;
+                }
+                // 还需要保存到缓存中
+                wx.setStorage({
+                    key: 'cart',
+                    data: cartData
+                });
+                 this.$apply()
+            },
+            fail:res =>{
+                console.log(res);
+                
+                // 如果没有数据的话  首先保存数据 把它变成一个对象
+                cartData ={};
+                //  直接添加即可
+                cartData[this.goods_id] =1;
+                  // 还需要保存到缓存中
+                wx.setStorage({
+                    key: 'cart',
+                    data: cartData
+                });
+                this.$apply()
+            }
+        });
+    }
+  }
+  events = {}
+  watch = {}
+  computed = {}
+  onLoad(options) {
+    // console.log(options)
+    this.goods_id = options.goods_id
+    wx.request({
+      url: 'https://127.0.0.1/api/public/v1/goods/detail',
+      method: 'GET',
+      data: {
+        goods_id: this.goods_id
+      },
+      success: res => {
+        // console.log(res)
+        this.imgData = res.data.message
+        // 遍历图片数组的每一个 使用forEach
+        this.imgData.pics.forEach(res => {
+          // console.log(res);
+          this.previewImgUrls.push(res.pics_sma_url)
+        })
+        //  检查数据
+        this.$apply()
+        // console.log(this.imgData.pics);
+        //  数据绑定
+        var article = this.imgData.goods_introduce
+        /**
+         * WxParse.wxParse(bindName , type, data, target,imagePadding)
+         * 1.bindName绑定的数据名(必填)
+         * 2.type可以为html或者md(必填)
+         * 3.data为传入的具体数据(必填)
+         * 4.target为Page对象,一般为this(必填)
+         * 5.imagePadding为当图片自适应是左右的单一padding(默认为0,可选)
+         */
+        var that = this
+        WxParse.wxParse('article', 'html', article, that, 5)
+      },
+      fail: () => {}
+    })
+  }
+  onShow() {}
+}
+</script>
+
+<style lang='less'>
+//在使用的Wxss中引入WxParse.css,可以在app.wxss
+@import '../wxParse/wxParse.wxss';
+//  轮播图样式
+swiper {
+  height: 720rpx;
+  image {
+    height: 100%;
+    display: block;
+    margin: 0 auto;
+  }
+} // 商品基本信息样式
+.products {
+  padding-top: 45rpx;
+  padding-left: 17rpx;
+  .price {
+    font-size: 35rpx;
+    color: #eb4450;
+    margin-bottom: 42rpx;
+  }
+  .detail-box {
+    display: flex;
+    align-items: center;
+    height: 80rpx;
+    .left {
+      flex: 1;
+      font-size: 30rpx;
+      height: 80rpx;
+      overflow: hidden;
+    }
+    .right {
+      width: 142rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 26rpx;
+      color: #666;
+    }
+  }
+  .kuaidi {
+    padding-top: 42rpx;
+    font-size: 28rpx;
+    color: #aaa;
+  }
+} // 图文介绍的样式
+.tab-box {
+  margin-top: 20rpx;
+  background-color: pink;
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    height: 100rpx;
+    .item {
+      flex: 1;
+      text-align: center;
+      line-height: 100rpx;
+      font-size: 28rpx;
+      transition: 1s;
+      &.active {
+        color: #ff2d4a;
+        box-shadow: inset 0 -10rpx 0 #ff2d4a;
+      }
+    }
+  }
+  .tab-content {
+    .item {
+    }
+  }
+}
+// 图文参数的图片样式
+.wxParse-img {
+  width: 100%;
+  display: block;
+}
+
+//  底部样式
+.footer {
+  display: flex;
+  height: 100rpx;
+  background-color: #fff;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  view {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .contact {
+    font-size: 24rpx;
+  }
+  .cart {
+    font-size: 24rpx;
+  }
+  .join-cart {
+    flex: 2;
+    background-color: #f4b73f;
+    font-size: 32rpx;
+    color: #fff;
+  }
+  .buy {
+    flex: 2;
+    background-color: #eb4450;
+    font-size: 32rpx;
+    color: #fff;
+  }
+}
+</style>

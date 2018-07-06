@@ -1,0 +1,297 @@
+<!--  -->
+<template>
+  <!-- 顶部个人信息 -->
+  <view class='mine-top'>
+    <view class="personal-icon">
+      <text class="iconfont icon-shezhi"></text>
+      <button bindgetuserinfo="getUser" open-type="getUserInfo">
+      <image  src="{{!userInfo?'/img/4.png':userInfo.avatarUrl}}"></image>
+      </button>
+      <text class="iconfont icon-xiaoxi"></text>
+    </view>
+    <text>{{!userInfo?'黑猩猩登录/注册':userInfo.nickName}}</text>
+  </view>
+  <!-- 个人信息主体 -->
+  <view class="mine-main">
+    <!-- 收藏以及浏览足迹 -->
+    <view class="collection">
+      <view class="collection-list">
+        <text>0</text>
+        <text>收藏的店铺</text>
+      </view>
+      <view class="collection-list">
+        <text>0</text>
+        <text>收藏的商品</text>
+      </view>
+      <view class="collection-list">
+        <text>0</text>
+        <text>关注的商品</text>
+      </view>
+      <view class="collection-list">
+        <text>0</text>
+        <text>我的足迹</text>
+      </view>
+    </view>
+    <!-- 我的订单 -->
+    <view class="mine-order">
+        <view class="order-top">我的订单</view>
+        <view class="orders" @tap="toOrder">
+            <view class="oreder-list">
+              <text class="iconfont icon-daifukuan"></text>
+              <text class="">代付款</text>
+            </view>
+             <view class="oreder-list">
+              <text class="iconfont icon-daishouhuo"></text>
+              <text class="">待收货</text>
+            </view>
+             <view class="oreder-list">
+              <text class="iconfont icon-tuikuan"></text>
+              <text class="">退货/退款</text>
+            </view>
+             <view class="oreder-list">
+              <text class="iconfont icon-dingdan"></text>
+              <text class="">全部订单</text>
+            </view>
+        </view>
+    </view>
+    <!-- 收货地址 -->
+    <view @tap="getAddress" class="address">
+      <text>收货地址</text>
+      <text class="iconfont icon-jiantouyou"></text>
+    </view>
+    <!-- 底部区域 联系客服-->
+    <view class="main-footer">
+        <view class="footer-list">
+          <text>联系客服</text>
+          <text>18868834588</text>
+        </view>
+        <view class="footer-list">
+          <text>意见反馈</text>
+          <text class="iconfont icon-jiantouyou"></text>
+        </view>
+        <view class="footer-list">
+          <text>关注我们</text>
+          <text class="iconfont icon-jiantouyou"></text>
+        </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class Mine extends wepy.page {
+  config = {
+    navigationBarTitleText: '我的'
+  }
+
+  data = {
+    userInfo: undefined
+  }
+
+  components = {}
+
+  methods = {
+
+
+    // 获取用户信息跟头像
+    getUser() {
+      // wx.getUserInfo({
+      //   withCredentials: 'false',
+      //   lang: 'zh_CN',
+      //   success: res => {
+      //     // console.log(res)
+      //     this.userInfo = res.userInfo
+      //     this.$apply()
+      //   }
+      // })
+      wx.login({
+        success: loginRes => {
+          // console.log(loginRes)
+          wx.getUserInfo({
+            withCredentials: 'false',
+            lang: 'zh_CN',
+            success: userRes => {
+              // console.log(userRes)
+              this.userInfo =userRes.userInfo
+              wx.request({
+                url: 'https://127.0.0.1/api/public/v1/users/wxlogin',
+                method: 'post',
+                data: {
+                  code: loginRes.code,
+                  encryptedData:userRes.encryptedData,
+                  iv:userRes.iv,
+                  rawData:userRes.rawData,
+                  signature:userRes.signature
+                },
+                success: (data)=>{
+                  console.log(data)
+                  // 返回说明登录成功了 保存token
+                  wx.setStorage({
+                    key: 'token',
+                    data: data.data.message.token
+                  });
+                  this.$apply()
+                },
+                fail: ()=>{}
+              });
+            }
+          });
+        }
+      });
+    },
+    // 获取用户的收货地址
+    getAddress() {
+      wx.chooseAddress({
+        success: res => {
+          console.log(res);
+          wx.setStorage({
+            key: 'address',
+            data: res
+          });
+        }
+      })
+    },
+    // 去订单页面
+    toOrder() {
+      wx.navigateTo({
+        url: '/pages/order'
+      });
+    }
+  }
+
+  events = {}
+
+  watch = {}
+
+  computed = {}
+
+  onLoad() {
+    wx.getUserInfo({
+      withCredentials: 'false',
+      lang: 'zh_CN',
+      success: res => {
+        this.userInfo = res.userInfo
+        this.$apply()
+      }
+    })
+  }
+
+  onShow() {}
+}
+</script>
+
+<style lang='less'>
+// 个人信息顶部
+.mine-top {
+  width: 100%;
+  height: 400rpx;
+  background-color: #ff2d4a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  .personal-icon {
+    display: flex;
+    align-items: center;
+    padding-bottom: 20rpx;
+    .iconfont {
+      font-size: 28rpx;
+      margin: 0 66rpx;
+    }
+    image {
+      width: 145rpx;
+      height: 145rpx;
+      border-radius: 50%;
+      border: 5rpx solid #fff;
+      box-sizing: border-box;
+    }
+  }
+  text {
+    font-size: 28rpx;
+    color: #fff;
+  }
+}
+// 个人主体的样式
+.mine-main {
+  background-color: #f4f4f4;
+  padding: 0 16rpx;
+  .collection {
+    height: 120rpx;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    transform: translateY(-26rpx);
+    .collection-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      text {
+        font-size: 26rpx;
+        color: #666666;
+      }
+    }
+  }
+  .mine-order {
+    background-color: #fff;
+    .order-top {
+      height: 88rpx;
+      padding-left: 30rpx;
+      font-size: 30rpx;
+      line-height: 88rpx;
+      border-bottom: 1px solid #eee;
+    }
+    .orders {
+      display: flex;
+      height: 166rpx;
+      align-items: center;
+      .oreder-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around;
+        text {
+          font-size: 28rpx;
+        }
+        .iconfont {
+          font-size: 60rpx;
+          color: #ff2d4a;
+          margin-bottom: 20rpx;
+        }
+      }
+    }
+  }
+  .address {
+    display: flex;
+    height: 88rpx;
+    background-color: #fff;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30rpx;
+    font-size: 28rpx;
+    margin: 20rpx 0;
+    .iconfont {
+      color: #ccc;
+    }
+  }
+  .main-footer {
+    background-color: #fff;
+    .footer-list {
+      display: flex;
+      height: 85rpx;
+      background-color: #fff;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30rpx;
+      font-size: 28rpx;
+      margin: 20rpx 0;
+      border-bottom: 1px solid #eee;
+      .iconfont {
+        color: #ccc;
+      }
+    }
+  }
+}
+</style>

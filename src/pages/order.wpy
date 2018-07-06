@@ -1,0 +1,216 @@
+<!--  -->
+<template>
+    <view class="tab-box">
+        <!-- 顶部区域 -->
+        <view class="tab-bar">
+            <view @tap="selected(0)" class="item {{selectedIndex==0?'active':''}}">全部</view>
+            <view @tap="selected(1)" class="item {{selectedIndex==1?'active':''}}">代付款</view>
+            <view @tap="selected(2)" class="item {{selectedIndex==2?'active':''}}">已付款</view>
+            <view @tap="selected(3)" class="item {{selectedIndex==3?'active':''}}">退款/退货</view>
+        </view>
+        <!-- 内容区域 使用hidden属性 隐藏元素  -->
+        <view class="tab-content">
+            <view hidden="{{selectedIndex!=0}}" class="item order-item">
+                <!-- 订单商品的详情 -->
+                <block wx:for="{{orderDetails}}" wx:key="">
+                   <view class="order-list">
+                    <block wx:for="{{item.goods}}" wx:for-item="itemName">
+                    <view class="orders">
+                       <view class="left">
+                            <image src="{{itemName.goods_small_logo}}"></image>
+                       </view>
+                        <view class="right">
+                            <text>{{itemName.goods_name}}</text>
+                            <view>
+                                <text class="money">¥{{itemName.goods_price}}.00</text>
+                                <text> X{{itemName.goods_number}}</text>
+                            </view>
+                        </view>
+                    </view>
+                    </block>
+                    <view class="product">
+                        共1件商品,总计:¥ {{item.total_price}} (含运费0.00)
+                    </view>
+                    <view class="pay">
+                        <text>订单号:{{item.order_number}}</text>
+                        <text class="pay-btn">支付</text>
+                    </view>
+                   </view>
+                </block>
+            </view>
+            <view hidden="{{selectedIndex!=1}}" class="item">2</view>
+            <view hidden="{{selectedIndex!=2}}" class="item">3</view>
+            <view hidden="{{selectedIndex!=3}}" class="item">4</view>
+        </view>
+    </view>
+   
+    
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class Order extends wepy.page {
+  config = {
+    navigationBarTitleText: '订单'
+  }
+
+  data = {
+      //  声明一个起始索引值
+      selectedIndex:0,
+      // 用来存储订单数据的
+      orderDetails: ''
+  }
+
+  components = {}
+
+  methods = {
+     selected(index) {
+        //  console.log(index);
+         this.selectedIndex =index;
+     } 
+  }
+
+  events = {}
+
+  watch = {}
+
+  computed = {}
+
+  onLoad() {
+    // 获取保存的用户地址信息
+    wx.getStorage({
+      key: 'address',
+      success: res => {
+        console.log(res)
+      }
+    });
+    wx.getStorage({
+        key: 'token',
+        success: res => {
+            console.log(res)
+            var token =res.data
+            wx.request({
+                url: 'https://127.0.0.1/api/public/v1/my/orders/all?type=1',
+                method: 'GET',
+                header: {Authorization:token},
+                success: res=>{
+                    // console.log(data)
+                    this.orderDetails =res.data.message.orders
+                    console.log(this.orderDetails)
+                    // 检查脏数据  因为是在回调函数里面的
+                    this.$apply()
+                },
+                fail: ()=>{}
+            });
+        }
+    });
+  }
+
+  onShow() {}
+}
+</script>
+
+<style lang='less'>
+page{
+    background: #f4f4f4;
+}
+    .tab-box{
+        .tab-bar{
+            height: 100rpx;
+            background-color: #fff;
+            display: flex;
+            .item{
+                flex: 1;
+                text-align: center;
+                line-height: 100rpx;
+                font-size: 32rpx;
+                &.active{
+                    color: #ff2d4a;
+                    position: relative;
+                    &::after{
+                        content: '';
+                        position: absolute;
+                        width: 100%;
+                        height: 12rpx;
+                        background-color: #ff2d4a;
+                        left: 0;
+                        bottom: 0;
+                    }
+                }
+            }
+        }
+    }
+    // 订单详情样式
+    .order-item{
+        
+        .order-list{
+           
+            .orders{
+                height: 260rpx;
+                background-color: #fff;
+                border-bottom: 1px solid #ddd;
+                display: flex;
+                padding: 30rpx 23rpx;
+                box-sizing: border-box;
+                margin-top: 25rpx;
+                .left{
+                    width: 202rpx;
+                    height: 202rpx;
+                    margin-right: 25rpx;
+                    image{
+                        width: 100%;
+                        height: 100%;
+                    }
+                }
+                .right{
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    >text{
+                        font-size: 32rpx;
+                        height: 80rpx;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+                    >view{
+                        display: flex;
+                        justify-content: space-between;
+                        .money{
+                            color: #eb4450;
+                            font-size: 34rpx;
+                        }
+                    }
+                }
+            }
+            .product{
+                height: 88rpx;
+                line-height: 88rpx;
+                background-color: #fff;
+                border-bottom: 1px solid #ddd;
+                font-size: 28rpx;
+                text-align: right;
+                padding: 0 18rpx;
+            }
+            .pay{
+                height: 88rpx;
+                background-color: #fff;
+                border-bottom: 1px solid #ddd;
+                font-size: 28rpx;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 18rpx;
+                align-items: center;
+                .pay-btn{
+                    height: 56rpx;
+                    width: 156rpx;
+                    border: 1px solid #999;
+                    text-align: center;
+                    line-height: 56rpx;
+                    border-radius: 8rpx;
+                    color: #eb4450;
+                }
+            }
+        }
+    }
+</style>

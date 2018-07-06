@@ -1,0 +1,158 @@
+<!--  -->
+<template>
+  <!-- 调用组件 顶部搜索栏-->
+  <!-- <searchBar></searchBar> -->
+  <bar></bar>
+  <!-- 主体部分 -->
+  <view class="scroll-box">
+            <scroll-view class="left" scroll-y scroll-with-animation @scroll="">
+                <block wx:for="{{categoryData}}" wx:key="">
+                    <view @tap="categoryList({{index}})" data-id="{{item.cat_id}}" class="items {{index==selectIndex?'active':''}}" >{{item.cat_name}}</view>
+                </block>
+            </scroll-view>
+            <scroll-view class="right"  scroll-y scroll-with-animation @scroll="">
+                <!-- 使用当前的索引值来做循环体selectIndex -->
+                 <block wx:for="{{categoryData[selectIndex].children}}" wx:for-item="itemTitle">
+                    <image class="titleImg" src="/img/titleImage.png" ></image>
+                   <view class="title">/  {{itemTitle.cat_name}}  /</view>
+                   <view class="brand-box">
+                        <block wx:for="{{itemTitle.children}}" wx:for-item="itemSon">
+                            <view class="brand">
+                                <image src="https://127.0.0.1/{{itemSon.cat_icon}}"></image>
+                                <text>{{itemSon.cat_name}}</text>
+                            </view>
+                        </block>
+                   </view>
+                 </block>   
+            </scroll-view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+// 引入组件
+// import searchBar from '../comments/searchBar'
+import bar from '../comments/bar'
+export default class Category extends wepy.page {
+  config = {
+    navigationBarTitleText: '分类'
+  }
+
+  data = {
+    categoryData: '',
+    selectIndex: 0
+  }
+  // 声明页面需要使用的组件
+  components = {
+    // searchBar: searchBar
+    bar:bar
+  }
+  methods = {
+    // 点击谁是高亮
+    categoryList(index) {
+      // console.log(index);
+      this.selectIndex = index
+    }
+  }
+
+  events = {}
+
+  watch = {}
+
+  computed = {}
+  
+  onLoad() {
+    console.log('onload')
+    wx.request({
+      url: 'https://127.0.0.1/api/public/v1/categories',
+      method: 'GET',
+      success: data => {
+        console.log(data)
+        this.categoryData = data.data.message
+        this.$apply()
+      },
+      fail: () => {}
+    })
+  }
+
+  onShow() {}
+}
+</script>
+
+<style lang='less'>
+page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  .scroll-box {
+    flex: 1;
+    display: flex;
+    height: 100%;
+    // scroll-view {
+      .left {
+        width: 200rpx;
+        // background-color: pink;
+        .items {
+          height: 100rpx;
+          background-color: #f4f4f4;
+          text-align: center;
+          line-height: 100rpx;
+          font-size: 24rpx;
+          border-bottom: 1px solid #eee;
+          position: relative;
+          &.active {
+            color: #ff2d4a;
+            &::before {
+              content: '';
+              font-weight: 700;
+              position: absolute;
+              width: 10rpx;
+              height: 60rpx;
+              background-color: #ff2d4a;
+              left: 0;
+              top: 20rpx;
+            }
+          }
+        }
+      }
+      .right {
+        flex: 1;
+        // background-color: skyblue;
+        .title {
+          font-size: 35rpx;
+          text-align: center;
+          padding: 15rpx 0;
+          color: #ff2d4a;
+        }
+        .titleImg {
+          width: 520rpx;
+          height: 180rpx;
+          display: block;
+          margin: 10rpx auto;
+        }
+        .brand-box {
+          display: flex;
+          flex-wrap: wrap;
+
+          .brand {
+            width: 33.333%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            margin-bottom: 15rpx;
+            image {
+              width: 108rpx;
+              height: 70rpx;
+            }
+            text {
+              text-align: center;
+              font-size: 26rpx;
+            }
+          }
+        }
+      }
+    // }
+  }
+}
+</style>
